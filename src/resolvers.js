@@ -24,18 +24,18 @@ const resolvers = {
       return User.findById(uid);
     },
     todos: async () => {
-      return await ToDo.find().populate('createdAt');
+      return await ToDo.find().populate('createdBy');
     },
     todo: async (_, { id }) => {
-      return await ToDo.findById(id).populate('createdAt');
+      return await ToDo.findById(id).populate('createdBy');
     },
     todosByMe: async (_, __, { userId }) => {
       const uid = checkAuth(userId); // throws if not logged in
-      return await ToDo.find({ createdBy: uid }).populate('createdAt');
+      return await ToDo.find({ createdBy: uid }).populate('createdBy');
     },
     TodosByStatus: async (_, { status }, { userId }) => {
       checkAuth(userId); // throws if not logged in
-      return await ToDo.find({ status }).populate('createdAt');
+      return await ToDo.find({ status }).populate('createdBy');
     },
   },
   Mutation: {
