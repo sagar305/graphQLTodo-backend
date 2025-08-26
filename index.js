@@ -16,6 +16,7 @@ const startServer = async () => {
     typeDefs,
     resolvers,
     context,
+    introspection: true,
   });
 
   await server.start();
