@@ -26,7 +26,7 @@ const typeDefs = gql`
     # Add at least one field
     hello: String
     me(email: String!): User
-    todos: [ToDo!]!
+    todos(page: Int): [ToDo!]!
     todo(id: ID!): ToDo
     todosByMe: [ToDo!]!
     TodosByStatus(status: String!): [ToDo!]!
