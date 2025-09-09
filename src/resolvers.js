@@ -23,8 +23,12 @@ const resolvers = {
       const uid = checkAuth(userId); // throws if not logged in
       return User.findById(uid);
     },
-    todos: async () => {
-      return await ToDo.find().populate('createdBy');
+    todos: async (_, { page = 0 }) => {
+      return await ToDo.find()
+        .populate('createdBy')
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .skip(page * 10);
     },
     todo: async (_, { id }) => {
       return await ToDo.findById(id).populate('createdBy');
@@ -114,7 +118,7 @@ const resolvers = {
       const uid = checkAuth(userId); // throws if not logged in
       const todo = new ToDo({ name, description, createdBy: uid });
       await todo.save();
-      return todo;
+      return await ToDo.findById(todo._id).populate('createdBy');
     },
     updateTodo: async (_, { id, name, description, status }, { userId }) => {
       const uid = checkAuth(userId); // throws if not logged in
