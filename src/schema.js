@@ -16,6 +16,18 @@ const typeDefs = gql`
     createdAt: String!
   }
 
+  type Profile {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    role: [String!]
+    gender: String
+    dob: String
+    bio: String
+    userId: ID!
+    createdAt: String!
+  }
+
   type AuthPayload {
     token: String
     refreshToken: String
@@ -29,6 +41,7 @@ const typeDefs = gql`
     todos(page: Int): [ToDo!]!
     todo(id: ID!): ToDo
     todosByMe: [ToDo!]!
+    myProfile: Profile
     TodosByStatus(status: String!): [ToDo!]!
   }
 
@@ -39,6 +52,14 @@ const typeDefs = gql`
     refreshToken(refreshToken: String!): AuthPayload
     logout: Message
     createTodo(name: String!, description: String!): ToDo
+    updateProfile(
+      firstName: String
+      lastName: String
+      role: [String!]
+      bio: String
+      dob: String
+      gender: String
+    ): Profile
     updateTodo(id: ID!, name: String, description: String, status: String): ToDo
     deleteTodo(id: ID!): Message
   }
