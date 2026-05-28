@@ -1,5 +1,6 @@
 import User from './models/User.js';
 import { ToDo } from './models/ToDo.js';
+import { Profile } from './models/Profile.js';
 import { BlacklistedToken } from './models/BlackListedToken.js';
 import { sendMail } from '../utils/sendMail.js';
 import checkAuth from '../utils/checkAuth.js';
@@ -41,24 +42,25 @@ const resolvers = {
       checkAuth(userId); // throws if not logged in
       return await ToDo.find({ status }).populate('createdBy');
     },
+    myProfile: async (_, __, { userId }) => {
+      const uid = checkAuth(userId); // throws if not logged in
+      return await Profile.find({ userId: uid }).populate('createdBy');
+    },
   },
   Mutation: {
     signup: async (_, { email }) => {
       const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit
       const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 min expiry
 
-      let user = await User.findOne({ email });
+      let user = await User.findOne({ email, isVerified: true });
       if (!user) {
         user = new User({ email, otp, otpExpiry });
+        await user.save();
+        await sendMail(email, 'Your OTP Code', `Your OTP is ${otp}`);
+        return { message: 'OTP sent to email' };
       } else {
-        user.otp = otp;
-        user.otpExpiry = otpExpiry;
+        throw new Error('Email already registered. Please login.');
       }
-      await user.save();
-
-      await sendMail(email, 'Your OTP Code', `Your OTP is ${otp}`);
-
-      return { message: 'OTP sent to email' };
     },
     verifyOtp: async (_, { email, otp, password }) => {
       const user = await User.findOne({ email });
@@ -100,10 +102,10 @@ const resolvers = {
       try {
         const decoded = jwt.verify(
           refreshToken,
-          process.env.JWT_REFRESH_SECRET
+          process.env.JWT_REFRESH_SECRET,
         );
         const { token, refreshToken: newRefresh } = generateTokens(
-          decoded.userId
+          decoded.userId,
         );
 
         const user = await User.findById(decoded.userId);
@@ -119,6 +121,30 @@ const resolvers = {
       const todo = new ToDo({ name, description, createdBy: uid });
       await todo.save();
       return await ToDo.findById(todo._id).populate('createdBy');
+    },
+    updateProfile: async (
+      _,
+      { firstName, lastName, role, gender, dob, bio },
+      { userId },
+    ) => {
+      const uid = checkAuth(userId); // throws if not logged in
+      let profile = await Profile.findOne({ userId: uid });
+      if (!profile) {
+        profile = new Profile({ firstName, lastName, userId: uid });
+        if (role !== undefined) profile.role = role;
+        if (gender !== undefined) profile.gender = gender;
+        if (dob !== undefined) profile.dob = dob;
+        if (bio !== undefined) profile.bio = bio;
+      } else {
+        if (firstName !== undefined) profile.firstName = firstName;
+        if (lastName !== undefined) profile.lastName = lastName;
+        if (role !== undefined) profile.role = role;
+        if (gender !== undefined) profile.gender = gender;
+        if (dob !== undefined) profile.dob = dob;
+        if (bio !== undefined) profile.bio = bio;
+      }
+      await profile.save();
+      return await Profile.findById(profile._id).populate('createdBy');
     },
     updateTodo: async (_, { id, name, description, status }, { userId }) => {
       const uid = checkAuth(userId); // throws if not logged in
